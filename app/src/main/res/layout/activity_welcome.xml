@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wel"
+    tools:context=".WelcomeActivity">
+
+    <Button
+        android:id="@+id/welcome_helper_btn"
+        android:layout_width="250dp"
+        android:layout_height="60dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="336dp"
+        android:layout_marginEnd="72dp"
+        android:text="I'm a Helper" />
+
+    <Button
+        android:id="@+id/welcome_walker_btn"
+        android:layout_width="250dp"
+        android:layout_height="60dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="70dp"
+        android:layout_marginBottom="241dp"
+        android:text="I'm a Walker" />
+
+</RelativeLayout>
