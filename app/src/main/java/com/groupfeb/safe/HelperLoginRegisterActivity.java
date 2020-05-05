@@ -36,7 +36,7 @@ public class HelperLoginRegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_walker_login_register);
+        setContentView(R.layout.activity_helper_login_register);
 
         mAuth = FirebaseAuth.getInstance();
 
