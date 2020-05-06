@@ -75,7 +75,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     private ValueEventListener HelperLocationRefListner;
 
 
-    private TextView txtName, txtPhone, txtCarName;
+    private TextView txtName, txtPhone;
     private CircleImageView profilePic;
     private RelativeLayout relativeLayout;
 
@@ -441,7 +441,6 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
                     txtName.setText(name);
                     txtPhone.setText(phone);
-                    txtCarName.setText(car);
 
                     if (dataSnapshot.hasChild("image"))
                     {
