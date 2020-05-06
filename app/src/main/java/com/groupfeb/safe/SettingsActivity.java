@@ -51,6 +51,7 @@ public class SettingsActivity extends AppCompatActivity {
     private StorageTask uploadTask;
     private StorageReference storageProfilePicsRef;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +67,6 @@ public class SettingsActivity extends AppCompatActivity {
         storageProfilePicsRef = FirebaseStorage.getInstance().getReference().child("Profile Pictures");
 
 
-
         profileImageView = findViewById(R.id.profile_image);
 
         nameEditText = findViewById(R.id.name);
@@ -76,7 +76,6 @@ public class SettingsActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.save_button);
 
         profileChangeBtn = findViewById(R.id.change_picture_btn);
-
 
 
         closeButton.setOnClickListener(new View.OnClickListener() {
@@ -120,7 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode==CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE  &&  resultCode==RESULT_OK  &&  data!=null) {
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             imageUri = result.getUri();
 
@@ -137,7 +136,6 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
-
     private void validateControllers() {
         if (TextUtils.isEmpty(nameEditText.getText().toString())) {
             Toast.makeText(this, "Please provide your name.", Toast.LENGTH_SHORT).show();
@@ -148,6 +146,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+
     private void uploadProfilePicture() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Settings Account Information");
@@ -156,7 +155,8 @@ public class SettingsActivity extends AppCompatActivity {
 
 
         if (imageUri != null) {
-            final StorageReference fileRef = storageProfilePicsRef.child(mAuth.getCurrentUser().getUid()  +  ".jpg");
+            final StorageReference fileRef = storageProfilePicsRef
+                    .child(mAuth.getCurrentUser().getUid() + ".jpg");
 
             uploadTask = fileRef.putFile(imageUri);
 
@@ -166,13 +166,16 @@ public class SettingsActivity extends AppCompatActivity {
                     if (!task.isSuccessful()) {
                         throw task.getException();
                     }
+
                     return fileRef.getDownloadUrl();
-                }}).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                }
+            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
                 @Override
                 public void onComplete(@NonNull Task<Uri> task) {
                     if (task.isSuccessful()) {
                         Uri downloadUrl = task.getResult();
                         myUrl = downloadUrl.toString();
+
 
                         HashMap<String, Object> userMap = new HashMap<>();
                         userMap.put("uid", mAuth.getCurrentUser().getUid());
@@ -181,6 +184,7 @@ public class SettingsActivity extends AppCompatActivity {
                         userMap.put("image", myUrl);
 
                         databaseReference.child(mAuth.getCurrentUser().getUid()).updateChildren(userMap);
+
                         progressDialog.dismiss();
 
                         if (getType.equals("Helpers")) {
@@ -223,7 +227,7 @@ public class SettingsActivity extends AppCompatActivity {
         databaseReference.child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0) {
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     String name = dataSnapshot.child("name").getValue().toString();
                     String phone = dataSnapshot.child("phone").getValue().toString();
 
@@ -238,7 +242,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });

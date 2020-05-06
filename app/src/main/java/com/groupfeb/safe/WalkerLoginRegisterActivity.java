@@ -17,21 +17,28 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class WalkerLoginRegisterActivity extends AppCompatActivity {
 
-    private Button walkerLoginButton;
-    private Button walkerRegisterButton;
-    private TextView walkerRegisterLink;
-    private TextView walkerStatus;
-    private EditText walkerEmail;
-    private EditText walkerPassword;
-    private ProgressDialog loadingBar;
+    private TextView CreateWalkerAccount;
+    private TextView TitleWalker;
+    private Button LoginWalkerButton;
+    private Button RegisterWalkerButton;
+    private EditText WalkerEmail;
+    private EditText WalkerPassword;
+
+    private DatabaseReference walkersDatabaseRef;
     private FirebaseAuth mAuth;
-    private DatabaseReference walkerDatabaseRef;
-    private String onlineWalkerId;
+    private FirebaseAuth.AuthStateListener firebaseAuthListner;
+
+    private ProgressDialog loadingBar;
+
+    private FirebaseUser currentUser;
+    String currentUserId;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,109 +47,121 @@ public class WalkerLoginRegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        walkerLoginButton = (Button) findViewById(R.id.walker_login_btn);
-        walkerRegisterButton = (Button) findViewById(R.id.walker_register_btn);
-        walkerRegisterLink = (TextView) findViewById(R.id.register_walker_link);
-        walkerStatus = (TextView) findViewById(R.id.walker_status);
-        walkerEmail = (EditText) findViewById(R.id.email_walker);
-        walkerPassword = (EditText) findViewById(R.id.password_walker);
+
+        firebaseAuthListner = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+                if (currentUser != null) {
+                    Intent intent = new Intent(WalkerLoginRegisterActivity.this, WalkersMapActivity.class);
+                    startActivity(intent);
+                }
+            }
+        };
+
+
+        CreateWalkerAccount = (TextView) findViewById(R.id.walker_register_link);
+        TitleWalker = (TextView) findViewById(R.id.walker_status);
+        LoginWalkerButton = (Button) findViewById(R.id.walker_login_btn);
+        RegisterWalkerButton = (Button) findViewById(R.id.walker_register_btn);
+        WalkerEmail = (EditText) findViewById(R.id.walker_email);
+        WalkerPassword = (EditText) findViewById(R.id.walker_password);
         loadingBar = new ProgressDialog(this);
 
-        walkerRegisterButton.setVisibility(View.INVISIBLE);
-        walkerRegisterButton.setEnabled(false);
 
-        walkerRegisterLink.setOnClickListener(new View.OnClickListener() {
+        RegisterWalkerButton.setVisibility(View.INVISIBLE);
+        RegisterWalkerButton.setEnabled(false);
+
+        CreateWalkerAccount.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                walkerLoginButton.setVisibility(View.INVISIBLE);
-                walkerRegisterLink.setVisibility(View.INVISIBLE);
-                walkerStatus.setText("Register Walker");
-                walkerRegisterButton.setVisibility(View.VISIBLE);
-                walkerRegisterButton.setEnabled(true);
+            public void onClick(View view) {
+                CreateWalkerAccount.setVisibility(View.INVISIBLE);
+                LoginWalkerButton.setVisibility(View.INVISIBLE);
+                TitleWalker.setText("Helper Registration");
+
+                RegisterWalkerButton.setVisibility(View.VISIBLE);
+                RegisterWalkerButton.setEnabled(true);
             }
         });
 
-        walkerRegisterButton.setOnClickListener(new View.OnClickListener() {
+
+        RegisterWalkerButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                String email = walkerEmail.getText().toString();
-                String password = walkerPassword.getText().toString();
+            public void onClick(View view) {
+                String email = WalkerEmail.getText().toString();
+                String password = WalkerPassword.getText().toString();
 
-                RegisterCustomer(email, password);
-            }
-        });
-
-        walkerLoginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String email = walkerEmail.getText().toString();
-                String password = walkerPassword.getText().toString();
-
-                signInWalker(email, password);
-            }
-        });
-    }
-
-    private void signInWalker(String email, String password) {
-        if(TextUtils.isEmpty(email)) {
-            Toast.makeText(WalkerLoginRegisterActivity.this, "Please enter Email...", Toast.LENGTH_SHORT).show();
-        }
-        if(TextUtils.isEmpty(password)) {
-            Toast.makeText(WalkerLoginRegisterActivity.this, "Please enter Password...", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            loadingBar.setTitle("Walker Login");
-            loadingBar.setMessage("Please wait, while credentials are checked");
-            loadingBar.show();
-            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if(task.isSuccessful()) {
-                        Intent walkerIntent = new Intent(WalkerLoginRegisterActivity.this, WalkersMapActivity.class);
-                        startActivity(walkerIntent);
-
-                        Toast.makeText(WalkerLoginRegisterActivity.this, "Walker logged In Successful", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-
-                    } else {
-                        Toast.makeText(WalkerLoginRegisterActivity.this, "Login Unsuccessful, Please Try Again", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-                    }
+                if (TextUtils.isEmpty(email)) {
+                    Toast.makeText(WalkerLoginRegisterActivity.this, "Please Enter Email...", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
-    }
 
-    private void RegisterCustomer(String email, String password) {
-        if(TextUtils.isEmpty(email)) {
-            Toast.makeText(WalkerLoginRegisterActivity.this, "Please enter Email...", Toast.LENGTH_SHORT).show();
-        }
-        if(TextUtils.isEmpty(password)) {
-            Toast.makeText(WalkerLoginRegisterActivity.this, "Please enter Password...", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            loadingBar.setTitle("Walker Registration");
-            loadingBar.setMessage("Please wait, while data gets registered");
-            loadingBar.show();
-            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if(task.isSuccessful()) {
-                        onlineWalkerId = mAuth.getCurrentUser().getUid();
-                        walkerDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Walkers").child(onlineWalkerId);
+                if (TextUtils.isEmpty(password)) {
+                    Toast.makeText(WalkerLoginRegisterActivity.this, "Please Enter Password...", Toast.LENGTH_SHORT).show();
+                } else {
+                    loadingBar.setTitle("Please wait :");
+                    loadingBar.setMessage("While system is performing processing on your data...");
+                    loadingBar.show();
 
-                        walkerDatabaseRef.setValue(true);
-                        Intent helperIntent = new Intent(WalkerLoginRegisterActivity.this, HelpersMapActivity.class);
-                        startActivity(helperIntent);
+                    mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                currentUserId = mAuth.getCurrentUser().getUid();
+                                walkersDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Walkers").child(currentUserId);
+                                walkersDatabaseRef.setValue(true);
 
-                        Toast.makeText(WalkerLoginRegisterActivity.this, "Walker Register Successful", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-                    } else {
-                        Toast.makeText(WalkerLoginRegisterActivity.this, "Registration Unsuccessful, Please Try Again", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-                    }
+                                Intent intent = new Intent(WalkerLoginRegisterActivity.this, WalkersMapActivity.class);
+                                startActivity(intent);
+
+                                loadingBar.dismiss();
+                            } else {
+                                Toast.makeText(WalkerLoginRegisterActivity.this, "Please Try Again. Error Occurred, while registering... ", Toast.LENGTH_SHORT).show();
+
+                                loadingBar.dismiss();
+                            }
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
+
+        LoginWalkerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String email = WalkerEmail.getText().toString();
+                String password = WalkerPassword.getText().toString();
+
+                if (TextUtils.isEmpty(email)) {
+                    Toast.makeText(WalkerLoginRegisterActivity.this, "Please Enter Email...", Toast.LENGTH_SHORT).show();
+                }
+
+                if (TextUtils.isEmpty(password)) {
+                    Toast.makeText(WalkerLoginRegisterActivity.this, "Please Enter Password...", Toast.LENGTH_SHORT).show();
+                } else {
+                    loadingBar.setTitle("Please wait :");
+                    loadingBar.setMessage("While system is performing processing on your data...");
+                    loadingBar.show();
+
+                    mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(WalkerLoginRegisterActivity.this, "Sign In , Successful...", Toast.LENGTH_SHORT).show();
+
+                                Intent intent = new Intent(WalkerLoginRegisterActivity.this, WalkersMapActivity.class);
+                                startActivity(intent);
+
+                                loadingBar.dismiss();
+                            } else {
+                                Toast.makeText(WalkerLoginRegisterActivity.this, "Error Occurred, while Signing In... ", Toast.LENGTH_SHORT).show();
+
+                                loadingBar.dismiss();
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 }

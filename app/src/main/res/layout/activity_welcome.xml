@@ -8,25 +8,28 @@
     tools:context=".WelcomeActivity">
 
     <Button
-        android:id="@+id/welcome_helper_btn"
+        android:id="@+id/walker_welcome_btn"
         android:layout_width="250dp"
         android:layout_height="60dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_centerInParent="true"
-        android:layout_marginTop="336dp"
-        android:layout_marginEnd="72dp"
-        android:text="I'm a Helper" />
+        android:layout_marginBottom="131dp"
+        android:background="@android:color/holo_red_dark"
+        android:text="I'm a Walker"
+        android:textAllCaps="false"
+        android:textColor="@android:color/background_light"
+        android:textSize="18sp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/helper_welcome_btn" />
 
     <Button
-        android:id="@+id/welcome_walker_btn"
+        android:id="@+id/helper_welcome_btn"
         android:layout_width="250dp"
         android:layout_height="60dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
+        android:background="@android:color/background_light"
+        android:text="I'm a Helper"
+        android:textAllCaps="false"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="18sp"
+        android:layout_above="@+id/walker_welcome_btn"
         android:layout_centerHorizontal="true"
-        android:layout_marginStart="70dp"
-        android:layout_marginBottom="241dp"
-        android:text="I'm a Walker" />
-
+        android:layout_marginBottom="11dp" />
 </RelativeLayout>

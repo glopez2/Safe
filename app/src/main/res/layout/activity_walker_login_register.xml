@@ -9,81 +9,75 @@
 
     <TextView
         android:id="@+id/walker_status"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_centerInParent="true"
-        android:layout_marginStart="128dp"
-        android:layout_marginTop="316dp"
+        android:layout_above="@+id/walker_email"
+        android:layout_marginBottom="10dp"
         android:text="Walker Login"
         android:textAlignment="center"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
     <EditText
-        android:id="@+id/email_walker"
+        android:id="@+id/walker_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="0dp"
-        android:layout_marginEnd="0dp"
-        android:layout_marginBottom="292dp"
-        android:autoText="false"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
         android:ems="10"
         android:hint="Email..."
-        android:inputType="textEmailAddress"
-        android:textAlignment="viewStart" />
+        android:inputType="textEmailAddress"  />
 
     <EditText
-        android:id="@+id/password_walker"
-        android:layout_width="390dp"
+        android:id="@+id/walker_password"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="0dp"
-        android:layout_marginEnd="3dp"
-        android:layout_marginBottom="235dp"
+        android:layout_marginTop="16dp"
         android:ems="10"
         android:hint="Password..."
-        android:inputType="textPassword" />
+        android:inputType="textPassword"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_below="@+id/walker_email"
+        android:layout_alignParentStart="true" />
 
     <Button
         android:id="@+id/walker_login_btn"
-        android:layout_width="150dp"
+        android:layout_width="200dp"
         android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="157dp"
+        android:background="@android:color/holo_orange_light"
+        android:backgroundTint="@color/colorAccent"
         android:text="Login"
-        android:textAllCaps="true" />
+        android:textAllCaps="false"
+        android:textColor="?attr/actionMenuTextColor"
+        android:textSize="24sp"
+        android:layout_marginTop="13dp"
+        android:layout_below="@+id/walker_password"
+        android:layout_centerHorizontal="true"/>
 
     <TextView
-        android:id="@+id/register_walker_link"
+        android:id="@+id/walker_register_link"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/walker_login_btn"
         android:layout_centerHorizontal="true"
-        android:layout_marginStart="118dp"
-        android:layout_marginBottom="124dp"
-        android:text="Don't have an Account"
-        android:textColor="#E91E63"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="10dp"
+        android:text="Don't have an Account ?"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="15sp" />
 
     <Button
         android:id="@+id/walker_register_btn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="0dp"
-        android:layout_marginBottom="71dp"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/walker_register_link"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="0dp"
+        android:background="@android:color/holo_red_light"
         android:text="Register"
-        android:textAllCaps="true" />
+        android:textColor="@android:color/background_light"
+        android:textSize="20sp" />
 </RelativeLayout>

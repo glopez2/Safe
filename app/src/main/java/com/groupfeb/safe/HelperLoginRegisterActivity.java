@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -17,21 +18,27 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class HelperLoginRegisterActivity extends AppCompatActivity {
 
-    private Button helperLoginButton;
-    private Button helperRegisterButton;
-    private TextView helperRegisterLink;
-    private TextView helperStatus;
-    private EditText helperEmail;
-    private EditText helperPassword;
-    private ProgressDialog loadingBar;
+    private TextView CreateHelperAccount;
+    private TextView TitleHelper;
+    private Button LoginHelperButton;
+    private Button RegisterHelperButton;
+    private EditText HelperEmail;
+    private EditText HelperPassword;
+
+    private DatabaseReference helpersDatabaseRef;
     private FirebaseAuth mAuth;
-    private DatabaseReference helperDatabaseRef;
-    private String onlineHelperId;
+    private FirebaseAuth.AuthStateListener firebaseAuthListner;
+
+    private ProgressDialog loadingBar;
+
+    private FirebaseUser currentUser;
+    String currentUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,109 +47,137 @@ public class HelperLoginRegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        helperLoginButton = (Button) findViewById(R.id.helper_login_btn);
-        helperRegisterButton = (Button) findViewById(R.id.helper_register_btn);
-        helperRegisterLink = (TextView) findViewById(R.id.register_helper_link);
-        helperStatus = (TextView) findViewById(R.id.helper_status);
-        helperEmail = (EditText) findViewById(R.id.email_helper);
-        helperPassword = (EditText) findViewById(R.id.password_helper);
+//        firebaseAuthListner = new FirebaseAuth.AuthStateListener() {
+//            @Override
+//            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth)
+//            {
+//                currentUser = FirebaseAuth.getInstance().getCurrentUser();
+//
+//                if(currentUser != null)
+//                {
+//                    Intent intent = new Intent(HelperLoginRegisterActivity.this, HelpersMapActivity.class);
+//                    startActivity(intent);
+//                }
+//            }
+//        };
+
+
+        CreateHelperAccount = (TextView) findViewById(R.id.create_helper_account);
+        TitleHelper = (TextView) findViewById(R.id.title_helper);
+        LoginHelperButton = (Button) findViewById(R.id.login_helper_btn);
+        RegisterHelperButton = (Button) findViewById(R.id.register_helper_btn);
+        HelperEmail = (EditText) findViewById(R.id.helper_email);
+        HelperPassword = (EditText) findViewById(R.id.helper_password);
         loadingBar = new ProgressDialog(this);
 
-        helperRegisterButton.setVisibility(View.INVISIBLE);
-        helperRegisterButton.setEnabled(false);
 
-        helperRegisterLink.setOnClickListener(new View.OnClickListener() {
+        RegisterHelperButton.setVisibility(View.INVISIBLE);
+        RegisterHelperButton.setEnabled(false);
+
+        CreateHelperAccount.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                helperLoginButton.setVisibility(View.INVISIBLE);
-                helperRegisterLink.setVisibility(View.INVISIBLE);
-                helperStatus.setText("Register Helper");
-                helperRegisterButton.setVisibility(View.VISIBLE);
-                helperRegisterButton.setEnabled(true);
+            public void onClick(View view) {
+                CreateHelperAccount.setVisibility(View.INVISIBLE);
+                LoginHelperButton.setVisibility(View.INVISIBLE);
+                TitleHelper.setText("Helper Registration");
+
+                RegisterHelperButton.setVisibility(View.VISIBLE);
+                RegisterHelperButton.setEnabled(true);
             }
         });
 
-        helperRegisterButton.setOnClickListener(new View.OnClickListener() {
+
+        RegisterHelperButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                String email = helperEmail.getText().toString();
-                String password = helperPassword.getText().toString();
+            public void onClick(View view) {
+                String email = HelperEmail.getText().toString();
+                String password = HelperPassword.getText().toString();
 
-                RegisterHelper(email, password);
-            }
-        });
-
-        helperLoginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String email = helperEmail.getText().toString();
-                String password = helperPassword.getText().toString();
-
-                signInHelper(email, password);
-            }
-        });
-    }
-
-    private void signInHelper(String email, String password) {
-        if(TextUtils.isEmpty(email)) {
-            Toast.makeText(HelperLoginRegisterActivity.this, "Please enter Email...", Toast.LENGTH_SHORT).show();
-        }
-        if(TextUtils.isEmpty(password)) {
-            Toast.makeText(HelperLoginRegisterActivity.this, "Please enter Password...", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            loadingBar.setTitle("Helper Login");
-            loadingBar.setMessage("Please wait, while credentials are checked");
-            loadingBar.show();
-            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if(task.isSuccessful()) {
-                        Intent helperIntent = new Intent(HelperLoginRegisterActivity.this, HelpersMapActivity.class);
-                        startActivity(helperIntent);
-
-                        Toast.makeText(HelperLoginRegisterActivity.this, "Helper logged In Successfully", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-                    } else {
-                        Toast.makeText(HelperLoginRegisterActivity.this, "Login Unsuccessful, Please Try Again", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-                    }
+                if (TextUtils.isEmpty(email)) {
+                    Toast.makeText(HelperLoginRegisterActivity.this, "Please Enter Email...", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
-    }
 
-    private void RegisterHelper(String email, String password) {
-        if(TextUtils.isEmpty(email)) {
-            Toast.makeText(HelperLoginRegisterActivity.this, "Please enter Email...", Toast.LENGTH_SHORT).show();
-        }
-        if(TextUtils.isEmpty(password)) {
-            Toast.makeText(HelperLoginRegisterActivity.this, "Please enter Password...", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            loadingBar.setTitle("Helper Registration");
-            loadingBar.setMessage("Please wait, while data gets registered");
-            loadingBar.show();
-            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if(task.isSuccessful()) {
-                        onlineHelperId = mAuth.getCurrentUser().getUid();
-                        helperDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Helpers").child(onlineHelperId);
-                        helperDatabaseRef.setValue(true);
+                if (TextUtils.isEmpty(password)) {
+                    Toast.makeText(HelperLoginRegisterActivity.this, "Please Enter Password...", Toast.LENGTH_SHORT).show();
+                } else {
+                    loadingBar.setTitle("Please wait :");
+                    loadingBar.setMessage("While system is performing processing on your data...");
+                    loadingBar.show();
 
-                        Intent helperIntent = new Intent(HelperLoginRegisterActivity.this, HelpersMapActivity.class);
-                        startActivity(helperIntent);
+                    mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                currentUserId = mAuth.getCurrentUser().getUid();
+                                helpersDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Helpers").child(currentUserId);
+                                helpersDatabaseRef.setValue(true);
 
-                        Toast.makeText(HelperLoginRegisterActivity.this, "Helper Register Successful", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
+                                Intent intent = new Intent(HelperLoginRegisterActivity.this, HelpersMapActivity.class);
+                                startActivity(intent);
 
-                    } else {
-                        Toast.makeText(HelperLoginRegisterActivity.this, "Registration Unsuccessful, Please Try Again", Toast.LENGTH_SHORT).show();
-                        loadingBar.dismiss();
-                    }
+                                loadingBar.dismiss();
+                            } else {
+                                Toast.makeText(HelperLoginRegisterActivity.this, "Please Try Again. Error Occurred, while registering... ", Toast.LENGTH_SHORT).show();
+
+                                loadingBar.dismiss();
+                            }
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
+
+
+        LoginHelperButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String email = HelperEmail.getText().toString();
+                String password = HelperPassword.getText().toString();
+
+                if (TextUtils.isEmpty(email)) {
+                    Toast.makeText(HelperLoginRegisterActivity.this, "Please Enter Email...", Toast.LENGTH_SHORT).show();
+                }
+
+                if (TextUtils.isEmpty(password)) {
+                    Toast.makeText(HelperLoginRegisterActivity.this, "Please Enter Password...", Toast.LENGTH_SHORT).show();
+                } else {
+                    loadingBar.setTitle("Please wait :");
+                    loadingBar.setMessage("While system is performing processing on your data...");
+                    loadingBar.show();
+
+                    mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(HelperLoginRegisterActivity.this, "Sign In , Successful...", Toast.LENGTH_SHORT).show();
+
+                                Intent intent = new Intent(HelperLoginRegisterActivity.this, HelpersMapActivity.class);
+                                startActivity(intent);
+                            } else {
+                                Toast.makeText(HelperLoginRegisterActivity.this, "Error Occurred, while Signing In... ", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
+
+
+//    @Override
+//    protected void onStart()
+//    {
+//        super.onStart();
+//
+//        mAuth.addAuthStateListener(firebaseAuthListner);
+//    }
+//
+//
+//    @Override
+//    protected void onStop()
+//    {
+//        super.onStop();
+//
+//        mAuth.removeAuthStateListener(firebaseAuthListner);
+//    }
 }
