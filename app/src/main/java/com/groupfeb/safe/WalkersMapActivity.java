@@ -56,7 +56,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
     private Button Logout;
     private Button SettingsButton;
-    private Button CallCabCarButton;
+    private Button CallHelperButton;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
     private DatabaseReference WalkerDatabaseRef;
@@ -75,7 +75,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     private ValueEventListener HelperLocationRefListner;
 
 
-    private TextView txtName, txtPhone, txtCarName;
+    private TextView txtName, txtPhone;
     private CircleImageView profilePic;
     private RelativeLayout relativeLayout;
 
@@ -100,7 +100,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
         Logout = (Button) findViewById(R.id.logout_walker_btn);
         SettingsButton = (Button) findViewById(R.id.settings_walker_btn);
-        CallCabCarButton =  (Button) findViewById(R.id.call_helper_button);
+        CallHelperButton =  (Button) findViewById(R.id.call_helper_button);
 
         txtName = findViewById(R.id.name_helper);
         txtPhone = findViewById(R.id.phone_helper);
@@ -138,7 +138,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
 
 
-        CallCabCarButton.setOnClickListener(new View.OnClickListener() {
+        CallHelperButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
             {
@@ -175,7 +175,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
                         HelperMarker.remove();
                     }
 
-                    CallCabCarButton.setText("Call a Cab");
+                    CallHelperButton.setText("Call a Helper");
                     relativeLayout.setVisibility(View.GONE);
                 }
                 else
@@ -190,8 +190,8 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
                     WalkerPickUpLocation = new LatLng(LastLocation.getLatitude(), LastLocation.getLongitude());
                     PickUpMarker = mMap.addMarker(new MarkerOptions().position(WalkerPickUpLocation).title("My Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
 
-                    CallCabCarButton.setText("Getting your Helper...");
-                    getClosetHelperCab();
+                    CallHelperButton.setText("Getting your Helper...");
+                    getClosetHelperHelper();
                 }
             }
         });
@@ -200,7 +200,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
 
 
-    private void getClosetHelperCab()
+    private void getClosetHelperHelper()
     {
         GeoFire geoFire = new GeoFire(HelperAvailableRef);
         geoQuery = geoFire.queryAtLocation(new GeoLocation(WalkerPickUpLocation.latitude, WalkerPickUpLocation.longitude), radius);
@@ -227,7 +227,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
                     //Show helper location on walkerMapActivity
                     GettingHelperLocation();
-                    CallCabCarButton.setText("Looking for Helper Location...");
+                    CallHelperButton.setText("Looking for Helper Location...");
                 }
             }
 
@@ -247,7 +247,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
                 if(!helperFound)
                 {
                     radius = radius + 1;
-                    getClosetHelperCab();
+                    getClosetHelperHelper();
                 }
             }
 
@@ -275,7 +275,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
                             List<Object> helperLocationMap = (List<Object>) dataSnapshot.getValue();
                             double LocationLat = 0;
                             double LocationLng = 0;
-                            CallCabCarButton.setText("Helper Found");
+                            CallHelperButton.setText("Helper Found");
 
 
                             relativeLayout.setVisibility(View.VISIBLE);
@@ -311,11 +311,11 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
                             if (Distance < 90)
                             {
-                                CallCabCarButton.setText("Helper's Reached");
+                                CallHelperButton.setText("Helper's Reached");
                             }
                             else
                             {
-                                CallCabCarButton.setText("Helper Found: " + String.valueOf(Distance));
+                                CallHelperButton.setText("Helper Found: " + String.valueOf(Distance));
                             }
 
                             HelperMarker = mMap.addMarker(new MarkerOptions().position(HelperLatLng).title("your helper is here").icon(BitmapDescriptorFactory.fromResource(R.drawable.helper)));
@@ -432,11 +432,9 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
                 {
                     String name = dataSnapshot.child("name").getValue().toString();
                     String phone = dataSnapshot.child("phone").getValue().toString();
-                    String car = dataSnapshot.child("car").getValue().toString();
 
                     txtName.setText(name);
                     txtPhone.setText(phone);
-                    txtCarName.setText(car);
 
                     if (dataSnapshot.hasChild("image"))
                     {
