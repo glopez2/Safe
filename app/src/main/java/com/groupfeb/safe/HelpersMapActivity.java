@@ -1,11 +1,5 @@
 package com.groupfeb.safe;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
-
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -15,6 +9,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.legacy.app.ActivityCompat;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -37,13 +35,17 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.annotations.Nullable;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        com.google.android.gms.location.LocationListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
@@ -124,7 +126,7 @@ public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCa
 
     private void getAssignedWalkersRequest() {
         AssignedWalkerRef = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child("Helpers").child(helperID).child("WalkerWalkID");
+                .child("Helpers").child(helperID).child("WalkerRideID");
 
         AssignedWalkerRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -179,7 +181,7 @@ public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCa
                     }
 
                     LatLng HelperLatLng = new LatLng(LocationLat, LocationLng);
-                    PickUpMarker = mMap.addMarker(new MarkerOptions().position(HelperLatLng).title("Walker PickUp Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.idefault_user)));
+                    PickUpMarker = mMap.addMarker(new MarkerOptions().position(HelperLatLng).title("Walker PickUp Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
                 }
             }
 

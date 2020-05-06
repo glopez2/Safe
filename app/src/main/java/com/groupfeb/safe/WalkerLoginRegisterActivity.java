@@ -78,7 +78,7 @@ public class WalkerLoginRegisterActivity extends AppCompatActivity {
             public void onClick(View view) {
                 CreateWalkerAccount.setVisibility(View.INVISIBLE);
                 LoginWalkerButton.setVisibility(View.INVISIBLE);
-                TitleWalker.setText("Helper Registration");
+                TitleWalker.setText("Walker Registration");
 
                 RegisterWalkerButton.setVisibility(View.VISIBLE);
                 RegisterWalkerButton.setEnabled(true);
