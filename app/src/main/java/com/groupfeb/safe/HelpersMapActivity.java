@@ -126,7 +126,7 @@ public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCa
 
     private void getAssignedWalkersRequest() {
         AssignedWalkerRef = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child("Helpers").child(helperID).child("WalkerRideID");
+                .child("Helpers").child(helperID).child("WalkerWalkID");
 
         AssignedWalkerRef.addValueEventListener(new ValueEventListener() {
             @Override

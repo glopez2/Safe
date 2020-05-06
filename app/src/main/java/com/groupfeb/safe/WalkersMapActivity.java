@@ -47,7 +47,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        com.google.android.gms.location.LocationListener{
+        com.google.android.gms.location.LocationListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
@@ -80,13 +80,10 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     private RelativeLayout relativeLayout;
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_walkers_map);
-
 
 
         mAuth = FirebaseAuth.getInstance();
@@ -97,16 +94,14 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
         HelperLocationRef = FirebaseDatabase.getInstance().getReference().child("Helpers Working");
 
 
-
         Logout = (Button) findViewById(R.id.logout_walker_btn);
         SettingsButton = (Button) findViewById(R.id.settings_walker_btn);
-        CallHelperButton =  (Button) findViewById(R.id.call_helper_button);
+        CallHelperButton = (Button) findViewById(R.id.call_helper_button);
 
         txtName = findViewById(R.id.name_helper);
         txtPhone = findViewById(R.id.phone_helper);
         profilePic = findViewById(R.id.profile_image_helper);
         relativeLayout = findViewById(R.id.rel1);
-
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -115,105 +110,83 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
         mapFragment.getMapAsync(this);
 
 
-
         SettingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
                 Intent intent = new Intent(WalkersMapActivity.this, SettingsActivity.class);
                 intent.putExtra("type", "Walkers");
                 startActivity(intent);
             }
         });
 
-        Logout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                mAuth.signOut();
+        Logout.setOnClickListener(v -> {
+            mAuth.signOut();
 
-                LogOutUser();
-            }
+            LogOutUser();
         });
 
 
+        CallHelperButton.setOnClickListener(v -> {
+            if (requestType) {
+                requestType = false;
+                geoQuery.removeAllListeners();
+                HelperLocationRef.removeEventListener(HelperLocationRefListner);
 
-        CallHelperButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                if (requestType)
-                {
-                    requestType = false;
-                    geoQuery.removeAllListeners();
-                    HelperLocationRef.removeEventListener(HelperLocationRefListner);
+                if (helperFound != null) {
+                    HelpersRef = FirebaseDatabase.getInstance().getReference()
+                            .child("Users").child("Helpers").child(helperFoundID).child("WalkerWalkID");
 
-                    if (helperFound != null)
-                    {
-                        HelpersRef = FirebaseDatabase.getInstance().getReference()
-                                .child("Users").child("Helpers").child(helperFoundID).child("WalkerRideID");
+                    HelpersRef.removeValue();
 
-                        HelpersRef.removeValue();
-
-                        helperFoundID = null;
-                    }
-
-                    helperFound = false;
-                    radius = 1;
-
-                    String walkerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-                    GeoFire geoFire = new GeoFire(WalkerDatabaseRef);
-                    geoFire.removeLocation(walkerId);
-
-                    if (PickUpMarker != null)
-                    {
-                        PickUpMarker.remove();
-                    }
-                    if (HelperMarker != null)
-                    {
-                        HelperMarker.remove();
-                    }
-
-                    CallHelperButton.setText("Call a Helper");
-                    relativeLayout.setVisibility(View.GONE);
+                    helperFoundID = null;
                 }
-                else
-                {
-                    requestType = true;
 
-                    String walkerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                helperFound = false;
+                radius = 1;
 
-                    GeoFire geoFire = new GeoFire(WalkerDatabaseRef);
-                    geoFire.setLocation(walkerId, new GeoLocation(LastLocation.getLatitude(), LastLocation.getLongitude()));
+                String walkerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                    WalkerPickUpLocation = new LatLng(LastLocation.getLatitude(), LastLocation.getLongitude());
-                    PickUpMarker = mMap.addMarker(new MarkerOptions().position(WalkerPickUpLocation).title("My Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
+                GeoFire geoFire = new GeoFire(WalkerDatabaseRef);
+                geoFire.removeLocation(walkerId);
 
-                    CallHelperButton.setText("Getting your Helper...");
-                    getClosetHelperHelper();
+                if (PickUpMarker != null) {
+                    PickUpMarker.remove();
                 }
+                if (HelperMarker != null) {
+                    HelperMarker.remove();
+                }
+
+                CallHelperButton.setText("Call a Helper");
+                relativeLayout.setVisibility(View.GONE);
+            } else {
+                requestType = true;
+
+                String walkerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                GeoFire geoFire = new GeoFire(WalkerDatabaseRef);
+                geoFire.setLocation(walkerId, new GeoLocation(LastLocation.getLatitude(), LastLocation.getLongitude()));
+
+                WalkerPickUpLocation = new LatLng(LastLocation.getLatitude(), LastLocation.getLongitude());
+                PickUpMarker = mMap.addMarker(new MarkerOptions().position(WalkerPickUpLocation).title("My Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
+
+                CallHelperButton.setText("Getting your Helper...");
+                getClosetHelperHelper();
             }
         });
     }
 
 
-
-
-    private void getClosetHelperHelper()
-    {
+    private void getClosetHelperHelper() {
         GeoFire geoFire = new GeoFire(HelperAvailableRef);
         geoQuery = geoFire.queryAtLocation(new GeoLocation(WalkerPickUpLocation.latitude, WalkerPickUpLocation.longitude), radius);
         geoQuery.removeAllListeners();
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
-            public void onKeyEntered(String key, GeoLocation location)
-            {
+            public void onKeyEntered(String key, GeoLocation location) {
                 //anytime the helper is called this method will be called
                 //key=helperID and the location
-                if(!helperFound && requestType)
-                {
+                if (!helperFound && requestType) {
                     helperFound = true;
                     helperFoundID = key;
 
@@ -222,7 +195,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
                     HelpersRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Helpers").child(helperFoundID);
                     HashMap helpersMap = new HashMap();
-                    helpersMap.put("WalkerRideID", walkerID);
+                    helpersMap.put("WalkerWalkID", walkerID);
                     HelpersRef.updateChildren(helpersMap);
 
                     //Show helper location on walkerMapActivity
@@ -242,10 +215,8 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
             }
 
             @Override
-            public void onGeoQueryReady()
-            {
-                if(!helperFound)
-                {
+            public void onGeoQueryReady() {
+                if (!helperFound) {
                     radius = radius + 1;
                     getClosetHelperHelper();
                 }
@@ -259,19 +230,13 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     }
 
 
-
-
-
     //and then we get to the helper location - to tell walker where is the helper
-    private void GettingHelperLocation()
-    {
+    private void GettingHelperLocation() {
         HelperLocationRefListner = HelperLocationRef.child(helperFoundID).child("l")
                 .addValueEventListener(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot dataSnapshot)
-                    {
-                        if(dataSnapshot.exists()  &&  requestType)
-                        {
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists() && requestType) {
                             List<Object> helperLocationMap = (List<Object>) dataSnapshot.getValue();
                             double LocationLat = 0;
                             double LocationLng = 0;
@@ -282,19 +247,16 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
                             getAssignedHelperInformation();
 
 
-                            if(helperLocationMap.get(0) != null)
-                            {
+                            if (helperLocationMap.get(0) != null) {
                                 LocationLat = Double.parseDouble(helperLocationMap.get(0).toString());
                             }
-                            if(helperLocationMap.get(1) != null)
-                            {
+                            if (helperLocationMap.get(1) != null) {
                                 LocationLng = Double.parseDouble(helperLocationMap.get(1).toString());
                             }
 
                             //adding marker - to pointing where helper is - using this lat lng
                             LatLng HelperLatLng = new LatLng(LocationLat, LocationLng);
-                            if(HelperMarker != null)
-                            {
+                            if (HelperMarker != null) {
                                 HelperMarker.remove();
                             }
 
@@ -309,16 +271,13 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
                             float Distance = location1.distanceTo(location2);
 
-                            if (Distance < 90)
-                            {
+                            if (Distance < 90) {
                                 CallHelperButton.setText("Helper's Reached");
-                            }
-                            else
-                            {
+                            } else {
                                 CallHelperButton.setText("Helper Found: " + String.valueOf(Distance));
                             }
 
-                            HelperMarker = mMap.addMarker(new MarkerOptions().position(HelperLatLng).title("your helper is here").icon(BitmapDescriptorFactory.fromResource(R.drawable.helper)));
+                            HelperMarker = mMap.addMarker(new MarkerOptions().position(HelperLatLng).title("your helper is here").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
                         }
                     }
 
@@ -330,11 +289,8 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     }
 
 
-
-
     @Override
-    public void onMapReady(GoogleMap googleMap)
-    {
+    public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
         // now let set user location enable
@@ -347,8 +303,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle)
-    {
+    public void onConnected(@Nullable Bundle bundle) {
         locationRequest = new LocationRequest();
         locationRequest.setInterval(1000);
         locationRequest.setFastestInterval(1000);
@@ -356,8 +311,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
+                android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             //
 
             return;
@@ -378,8 +332,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     }
 
     @Override
-    public void onLocationChanged(Location location)
-    {
+    public void onLocationChanged(Location location) {
         //getting the updated location
         LastLocation = location;
 
@@ -390,8 +343,7 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
 
     //create this method -- for useing apis
-    protected synchronized void buildGoogleApiClient()
-    {
+    protected synchronized void buildGoogleApiClient() {
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -403,14 +355,12 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
 
 
     @Override
-    protected void onStop()
-    {
+    protected void onStop() {
         super.onStop();
     }
 
 
-    public void LogOutUser()
-    {
+    public void LogOutUser() {
         Intent startPageIntent = new Intent(WalkersMapActivity.this, WelcomeActivity.class);
         startPageIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(startPageIntent);
@@ -418,26 +368,21 @@ public class WalkersMapActivity extends FragmentActivity implements OnMapReadyCa
     }
 
 
-
-    private void getAssignedHelperInformation()
-    {
+    private void getAssignedHelperInformation() {
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference()
                 .child("Users").child("Helpers").child(helperFoundID);
 
         reference.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot)
-            {
-                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
-                {
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     String name = dataSnapshot.child("name").getValue().toString();
                     String phone = dataSnapshot.child("phone").getValue().toString();
 
                     txtName.setText(name);
                     txtPhone.setText(phone);
 
-                    if (dataSnapshot.hasChild("image"))
-                    {
+                    if (dataSnapshot.hasChild("image")) {
                         String image = dataSnapshot.child("image").getValue().toString();
                         Picasso.get().load(image).into(profilePic);
                     }
