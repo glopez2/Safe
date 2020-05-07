@@ -1,19 +1,18 @@
 package com.groupfeb.safe;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
-
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.legacy.app.ActivityCompat;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -36,27 +35,37 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.annotations.Nullable;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        com.google.android.gms.location.LocationListener {
 
     private GoogleMap mMap;
     GoogleApiClient googleApiClient;
-    Location lastLocation;
+    Location LastLocation;
     LocationRequest locationRequest;
-    private Button logoutHelperButton;
-    private Button settingsHelperButton;
+
+    private Button LogoutHelperBtn;
+    private Button SettingsHelperButton;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
-    private Boolean currentLogoutHelperStatus = false;
-    private DatabaseReference assignedWalkerRef, assignedWalkerPickupRef;
-    private String helperId, walkerId = "";
-    Marker pickupMarker;
-    private ValueEventListener assignedWalkerPickupRefListener;
+    private Boolean currentLogOutUserStatus = false;
+
+    //getting request walker's id
+    private String walkerID = "";
+    private String helperID;
+    private DatabaseReference AssignedWalkerRef;
+    private DatabaseReference AssignedWalkerPickUpRef;
+    Marker PickUpMarker;
+
+    private ValueEventListener AssignedWalkerPickUpRefListner;
 
     private TextView txtName, txtPhone;
     private CircleImageView profilePic;
@@ -66,85 +75,253 @@ public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //notice
         setContentView(R.layout.activity_helpers_map);
+
 
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
-        helperId = mAuth.getCurrentUser().getUid();
+        helperID = mAuth.getCurrentUser().getUid();
 
-        logoutHelperButton = (Button) findViewById(R.id.helper_logout_btn);
-        settingsHelperButton = (Button) findViewById(R.id.helper_settings_btn);
+
+        LogoutHelperBtn = (Button) findViewById(R.id.logout_helper_btn);
+        SettingsHelperButton = (Button) findViewById(R.id.settings_helper_btn);
 
         txtName = findViewById(R.id.name_walker);
         txtPhone = findViewById(R.id.phone_walker);
         profilePic = findViewById(R.id.profile_image_walker);
         relativeLayout = findViewById(R.id.rel2);
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        mapFragment.getMapAsync(HelpersMapActivity.this);
 
-        settingsHelperButton.setOnClickListener(new View.OnClickListener() {
+
+        SettingsHelperButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 Intent intent = new Intent(HelpersMapActivity.this, SettingsActivity.class);
-                intent.putExtra("type","Helpers");
+                intent.putExtra("type", "Helpers");
                 startActivity(intent);
             }
         });
 
-        logoutHelperButton.setOnClickListener(new View.OnClickListener() {
+        LogoutHelperBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentLogoutHelperStatus = true;
-                disconnectHelper();
+                currentLogOutUserStatus = true;
+                DisconnectHelper();
+
                 mAuth.signOut();
-                logoutHelper();
+
+                LogOutUser();
             }
         });
 
-        getAssignedWalkerRequest();
+
+        getAssignedWalkersRequest();
     }
 
-    private void getAssignedWalkerRequest() {
-        assignedWalkerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Helpers").child(helperId).child("WalkerWalkId");
-        assignedWalkerRef.addValueEventListener(new ValueEventListener() {
+
+    private void getAssignedWalkersRequest() {
+        AssignedWalkerRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child("Helpers").child(helperID).child("WalkerWalkID");
+
+        AssignedWalkerRef.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()) {
-                    walkerId = dataSnapshot.getValue().toString();
-                    getAssignedWalkerPickupLocation();
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    walkerID = dataSnapshot.getValue().toString();
+                    //getting assigned walker location
+                    GetAssignedWalkerPickupLocation();
 
                     relativeLayout.setVisibility(View.VISIBLE);
                     getAssignedWalkerInformation();
-
                 } else {
-                    walkerId = "";
+                    walkerID = "";
 
-                    if(pickupMarker != null) {
-                        pickupMarker.remove();
+                    if (PickUpMarker != null) {
+                        PickUpMarker.remove();
                     }
 
-                    if (assignedWalkerPickupRefListener != null) {
-                        assignedWalkerPickupRef.removeEventListener(assignedWalkerPickupRefListener);
+                    if (AssignedWalkerPickUpRefListner != null) {
+                        AssignedWalkerPickUpRef.removeEventListener(AssignedWalkerPickUpRefListner);
                     }
+
                     relativeLayout.setVisibility(View.GONE);
                 }
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
     }
 
+
+    private void GetAssignedWalkerPickupLocation() {
+        AssignedWalkerPickUpRef = FirebaseDatabase.getInstance().getReference().child("Walker Requests")
+                .child(walkerID).child("l");
+
+        AssignedWalkerPickUpRefListner = AssignedWalkerPickUpRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    List<Object> walkerLocationMap = (List<Object>) dataSnapshot.getValue();
+                    double LocationLat = 0;
+                    double LocationLng = 0;
+
+                    if (walkerLocationMap.get(0) != null) {
+                        LocationLat = Double.parseDouble(walkerLocationMap.get(0).toString());
+                    }
+                    if (walkerLocationMap.get(1) != null) {
+                        LocationLng = Double.parseDouble(walkerLocationMap.get(1).toString());
+                    }
+
+                    LatLng HelperLatLng = new LatLng(LocationLat, LocationLng);
+                    PickUpMarker = mMap.addMarker(new MarkerOptions().position(HelperLatLng).title("Walker PickUp Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // now let set user location enable
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        buildGoogleApiClient();
+        mMap.setMyLocationEnabled(true);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
+        super.onCreate(savedInstanceState, persistentState);
+
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (getApplicationContext() != null) {
+            //getting the updated location
+            LastLocation = location;
+
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+
+
+            String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+            DatabaseReference HelpersAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("Helpers Available");
+            GeoFire geoFireAvailability = new GeoFire(HelpersAvailabilityRef);
+
+            DatabaseReference HelpersWorkingRef = FirebaseDatabase.getInstance().getReference().child("Helpers Working");
+            GeoFire geoFireWorking = new GeoFire(HelpersWorkingRef);
+
+            switch (walkerID) {
+                case "":
+                    geoFireWorking.removeLocation(userID);
+                    geoFireAvailability.setLocation(userID, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                    break;
+
+                default:
+                    geoFireAvailability.removeLocation(userID);
+                    geoFireWorking.setLocation(userID, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(1000);
+        locationRequest.setFastestInterval(1000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            //
+
+            return;
+        }
+        //it will handle the refreshment of the location
+        //if we dont call it we will get location only once
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+
+    //create this method -- for useing apis
+    protected synchronized void buildGoogleApiClient() {
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+
+        googleApiClient.connect();
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (!currentLogOutUserStatus) {
+            DisconnectHelper();
+        }
+    }
+
+
+    private void DisconnectHelper() {
+        String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference HelpersAvailabiltyRef = FirebaseDatabase.getInstance().getReference().child("Helpers Available");
+
+        GeoFire geoFire = new GeoFire(HelpersAvailabiltyRef);
+        geoFire.removeLocation(userID);
+    }
+
+
+    public void LogOutUser() {
+        Intent startPageIntent = new Intent(HelpersMapActivity.this, WelcomeActivity.class);
+        startPageIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(startPageIntent);
+        finish();
+    }
+
+
     private void getAssignedWalkerInformation() {
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Users").child("Walkers").child(walkerId);
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference()
+                .child("Users").child("Walkers").child(walkerID);
+
         reference.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     String name = dataSnapshot.child("name").getValue().toString();
                     String phone = dataSnapshot.child("phone").getValue().toString();
@@ -160,144 +337,9 @@ public class HelpersMapActivity extends FragmentActivity implements OnMapReadyCa
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
-    }
-    private void getAssignedWalkerPickupLocation() {
-        assignedWalkerPickupRef = FirebaseDatabase.getInstance().getReference().child("Walker Requests").child(walkerId).child("l");
-        assignedWalkerPickupRefListener = assignedWalkerPickupRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()) {
-                    List<Object> walkerLocationMap = (List<Object>) dataSnapshot.getValue();
-
-                    double locationLat = 0;
-                    double locationLng = 0;
-
-                    if(walkerLocationMap.get(0) != null) {
-                        locationLat = Double.parseDouble(walkerLocationMap.get(0).toString());
-                    }
-                    if(walkerLocationMap.get(1) != null) {
-                        locationLng = Double.parseDouble(walkerLocationMap.get(1).toString());
-                    }
-
-                    LatLng helperLatLng = new LatLng(locationLat, locationLng);
-                    mMap.addMarker(new MarkerOptions().position(helperLatLng).title("Pickup Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.pickup)));
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-    }
-
-    private void logoutHelper() {
-        Intent welcomeIntent = new Intent(HelpersMapActivity.this, WelcomeActivity.class);
-        welcomeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(welcomeIntent);
-        finish();
-    }
-
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        buildGoogleApiClient();
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000);
-        locationRequest.setFastestInterval(1000);
-        locationRequest.setPriority(locationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if(getApplicationContext() != null) {
-            lastLocation = location;
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
-
-            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            DatabaseReference helperAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("HelpersAvailable");
-            GeoFire geoFireAvailability = new GeoFire(helperAvailabilityRef);
-
-            DatabaseReference helperWorkingRef = FirebaseDatabase.getInstance().getReference().child("Helpers Working");
-            GeoFire geoFireWorking = new GeoFire(helperWorkingRef);
-
-            switch (walkerId) {
-                case "":
-                    geoFireWorking.removeLocation(userId);
-                    geoFireAvailability.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
-                    break;
-                default:
-                    geoFireAvailability.removeLocation(userId);
-                    geoFireWorking.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
-                    break;
-            }
-        }
-    }
-
-    protected synchronized void buildGoogleApiClient() {
-        googleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
-        googleApiClient.connect();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        if(!currentLogoutHelperStatus) {
-            disconnectHelper();
-        }
-    }
-
-    private void disconnectHelper() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference helperAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("HelpersAvailable");
-
-        GeoFire geoFire = new GeoFire(helperAvailabilityRef);
-        geoFire.removeLocation(userId, new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete(String key, DatabaseError error) {
-
-            }
-        });
-        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient,this);
     }
 }
